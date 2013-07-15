@@ -3,8 +3,8 @@ tail-comodo
 
 DESCRIPTION
 -----------
-This program offers a command line interface viewing reading and monitoring the
-firewall event log of the Comodo Internet Security Pro and Comodo Firewall
+This program offers a command line interface for viewing and monitoring the
+firewall event log of the Comodo Internet Security Pro and [Comodo Firewall][3]
 programs.
 
 The user interface is heavily influenced by POSIX tail command implementations
@@ -69,3 +69,4 @@ With the pre-reqs in place, simply run make to build the program.
 
 [1]: http://www.mingw.org/
 [2]: http://www.cygwin.com/
+[3]: http://www.comodo.com/home/internet-security/firewall.php

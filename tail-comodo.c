@@ -93,12 +93,8 @@ int isdigits(char* s){
 }
 
 // Check if a file is readable
-// Returns TRUE if readable, else FALSE
 int readable(char* filename) {
-    if( _access( filename, 4 ) == NOT_FOUND )
-        return FALSE;
-    else
-        return TRUE;
+    return ! ( _access( filename, 4 ) == NOT_FOUND );
 }
 
 // END UTILITY FUNCTIONS ====================================================
@@ -108,10 +104,10 @@ int readable(char* filename) {
 // Returns TRUE if found, else FALSE
 int find_db(char* path) {
     char ext[] = "\\users\\all users\\comodo\\firewall pro\\cislogs.sdb";
-    char *var;
+    char *var, *drive;
 
-    var = getenv(ENV_VAR);  // If user has set the db location and
-    if(var){                           // the file exists, use it.
+    var = getenv(ENV_VAR);    // If user has set the db location and
+    if(var){                  // the file exists, use it.
         if( readable(var) ) {
             strcpy(path,var);
             return TRUE;
@@ -120,17 +116,13 @@ int find_db(char* path) {
         }
     }
 
-    var = getenv("SystemDrive");  // Try to find the db using standard
-    if( !var ) {                  // installation directories
-        var = "C:";
+    drive = getenv("SystemDrive");  // Try to find the db using standard
+    if( !drive ) {                  // installation directories
+        drive = "C:";
     }
-    strcpy(path,var);
+    strcpy(path,drive);
     strcat(path,ext);
-    if( readable(path) ) {
-        return TRUE;
-    }
-
-    return FALSE;                 // Not found, return failure
+    return readable(path);
 }
 
 void convert_to_ip(char* dst, const unsigned char* src){
@@ -177,10 +169,7 @@ void populate_result(sqlite3_stmt* stmt, int cols, resultrow* row) {
     action         = sqlite3_column_int(stmt,col++);
 
     srcaddr        = sqlite3_column_blob(stmt,col);
-    slen           = sqlite3_column_bytes(stmt,col++);
-
     dstaddr        = sqlite3_column_blob(stmt,col);
-    slen           = sqlite3_column_bytes(stmt,col++);
 
     switch(protocol){
         case  2: row->protocol = "IGMP"; break;
@@ -205,19 +194,17 @@ void populate_result(sqlite3_stmt* stmt, int cols, resultrow* row) {
 
 void execute_query(char* sql, int bind_value, void (*callback)(resultrow*) ) {
     sqlite3_stmt* stmt;
-    sqlite3* db = opts.db;
     int cols, rc = 0;
     resultrow row;
 
-    if(db == 0) {
-        if( sqlite3_open_v2(opts.db_file, &db, SQLITE_OPEN_READONLY, 0) != SQLITE_OK ) {
+    if(opts.db == 0) {
+        if( sqlite3_open_v2(opts.db_file, &opts.db, SQLITE_OPEN_READONLY, 0) != SQLITE_OK ) {
             printf("Failed to open SQLite3 database %d", opts.db_file);
         }
         if(opts.verbose) printf("Opening DB connection\n");
-        opts.db = db;
     }
     if(opts.verbose) printf("Preparing statement\n");
-    if( sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK ) {
+    if( sqlite3_prepare_v2(opts.db, sql, -1, &stmt, 0) != SQLITE_OK ) {
         error("Failed to prepare statement: %s", sql);
     }
     if( bind_value > 0 && sqlite3_bind_int(stmt, 1, bind_value) != SQLITE_OK) {
@@ -251,7 +238,6 @@ void print_row(resultrow* row) {
         row->path
     );
 }
-
 
 void tail(){
     switch(opts.cmd) {
